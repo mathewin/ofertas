@@ -105,6 +105,22 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS user_metrics (
+  user_id TEXT PRIMARY KEY,
+  min_price REAL,
+  max_price REAL,
+  min_discount INTEGER DEFAULT 0,
+  max_discount INTEGER,
+  min_rating REAL,
+  min_sales INTEGER DEFAULT 0,
+  official_only INTEGER DEFAULT 0,
+  keywords TEXT DEFAULT '',
+  blocked_keywords TEXT DEFAULT '',
+  preferred_stores TEXT DEFAULT '',
+  updated_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 `;
 
 export const POSTGRES_SCHEMA = `
@@ -214,6 +230,22 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS user_metrics (
+  user_id TEXT PRIMARY KEY,
+  min_price REAL,
+  max_price REAL,
+  min_discount INTEGER DEFAULT 0,
+  max_discount INTEGER,
+  min_rating REAL,
+  min_sales INTEGER DEFAULT 0,
+  official_only INTEGER DEFAULT 0,
+  keywords TEXT DEFAULT '',
+  blocked_keywords TEXT DEFAULT '',
+  preferred_stores TEXT DEFAULT '',
+  updated_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);
 `;
 
 export const DEFAULT_CATEGORIES = [
@@ -229,6 +261,14 @@ export const DEFAULT_CATEGORIES = [
 
 export const DEFAULT_SETTINGS = {
   minDiscount: '20',
+  maxDiscount: '',
+  minPrice: '',
+  maxPrice: '',
+  minRating: '4',
+  minSales: '50',
+  officialStoresOnly: 'false',
+  preferredKeywords: '',
+  preferredStores: '',
   requireLink: 'true',
   requirePrice: 'true',
   requireImage: 'false',

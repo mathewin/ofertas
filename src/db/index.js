@@ -519,8 +519,67 @@ export async function updateUser(id, patch) {
 
 export async function deleteUser(id) {
   await driver.execute('DELETE FROM sessions WHERE user_id = ?', [id]);
+  await driver.execute('DELETE FROM user_metrics WHERE user_id = ?', [id]);
   const result = await driver.execute('DELETE FROM users WHERE id = ?', [id]);
   return Number(result.changes || 0) > 0;
+}
+
+export function defaultUserMetrics() {
+  return {
+    min_price: null,
+    max_price: null,
+    min_discount: 0,
+    max_discount: null,
+    min_rating: null,
+    min_sales: 0,
+    official_only: 0,
+    keywords: '',
+    blocked_keywords: '',
+    preferred_stores: '',
+  };
+}
+
+export async function getUserMetrics(userId) {
+  const rows = await driver.query('SELECT * FROM user_metrics WHERE user_id = ?', [userId]);
+  if (!rows[0]) return { user_id: userId, ...defaultUserMetrics() };
+  return rows[0];
+}
+
+export async function upsertUserMetrics(userId, metrics) {
+  const now = new Date().toISOString();
+  await driver.execute(
+    `INSERT INTO user_metrics (
+      user_id, min_price, max_price, min_discount, max_discount, min_rating, min_sales,
+      official_only, keywords, blocked_keywords, preferred_stores, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(user_id) DO UPDATE SET
+      min_price = excluded.min_price,
+      max_price = excluded.max_price,
+      min_discount = excluded.min_discount,
+      max_discount = excluded.max_discount,
+      min_rating = excluded.min_rating,
+      min_sales = excluded.min_sales,
+      official_only = excluded.official_only,
+      keywords = excluded.keywords,
+      blocked_keywords = excluded.blocked_keywords,
+      preferred_stores = excluded.preferred_stores,
+      updated_at = excluded.updated_at`,
+    [
+      userId,
+      metrics.min_price,
+      metrics.max_price,
+      metrics.min_discount,
+      metrics.max_discount,
+      metrics.min_rating,
+      metrics.min_sales,
+      metrics.official_only ? 1 : 0,
+      metrics.keywords || '',
+      metrics.blocked_keywords || '',
+      metrics.preferred_stores || '',
+      now,
+    ],
+  );
+  return getUserMetrics(userId);
 }
 
 export async function createSession(userId, token, expiresAt) {
@@ -601,6 +660,8 @@ export const db = {
   getSessionUser,
   deleteSession,
   deleteUserSessions,
+  getUserMetrics,
+  upsertUserMetrics,
 };
 
 export default db;

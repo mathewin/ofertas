@@ -107,3 +107,19 @@ CREATE TABLE IF NOT EXISTS sessions (
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
+
+CREATE TABLE IF NOT EXISTS user_metrics (
+  user_id TEXT PRIMARY KEY,
+  min_price DOUBLE PRECISION,
+  max_price DOUBLE PRECISION,
+  min_discount INTEGER DEFAULT 0,
+  max_discount INTEGER,
+  min_rating DOUBLE PRECISION,
+  min_sales INTEGER DEFAULT 0,
+  official_only INTEGER DEFAULT 0,
+  keywords TEXT DEFAULT '',
+  blocked_keywords TEXT DEFAULT '',
+  preferred_stores TEXT DEFAULT '',
+  updated_at TEXT,
+  FOREIGN KEY (user_id) REFERENCES users(id)
+);

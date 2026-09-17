@@ -26,9 +26,10 @@ import { serializeOffer } from './public.js';
 const router = express.Router();
 
 const ALLOWED_SETTINGS = new Set([
-  'minDiscount', 'requireLink', 'requirePrice', 'requireImage', 'blockedKeywords',
-  'allowedCategories', 'expireMissing', 'ttlHours', 'publishMode', 'maxPerRun',
-  'intervalMinutes', 'aiEnabled',
+  'minDiscount', 'maxDiscount', 'minPrice', 'maxPrice', 'minRating', 'minSales',
+  'officialStoresOnly', 'preferredKeywords', 'preferredStores', 'requireLink',
+  'requirePrice', 'requireImage', 'blockedKeywords', 'allowedCategories',
+  'expireMissing', 'ttlHours', 'publishMode', 'maxPerRun', 'intervalMinutes', 'aiEnabled',
 ]);
 
 const ALLOWED_STATUS = new Set(['active', 'pending', 'hidden', 'expired', 'archived']);

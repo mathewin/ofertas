@@ -27,6 +27,8 @@ const els = {
   headerStatus: document.getElementById('header-status'),
   logout: document.getElementById('logout'),
   copyToast: document.getElementById('copy-toast'),
+  toggleMetrics: document.getElementById('toggle-metrics'),
+  metricsPanel: document.getElementById('metrics-panel'),
 };
 
 function escapeHtml(value) {
@@ -193,7 +195,77 @@ els.searchInput.addEventListener('input', (event) => {
 
 els.toggleSearch.addEventListener('click', () => {
   els.searchBar.hidden = !els.searchBar.hidden;
-  if (!els.searchBar.hidden) els.searchInput.focus();
+  if (!els.searchBar.hidden) {
+    els.metricsPanel.hidden = true;
+    els.searchInput.focus();
+  }
+});
+
+function fillMetrics(metrics) {
+  const form = els.metricsPanel;
+  if (!form || !metrics) return;
+  form.min_price.value = metrics.min_price ?? '';
+  form.max_price.value = metrics.max_price ?? '';
+  form.min_discount.value = metrics.min_discount || '';
+  form.max_discount.value = metrics.max_discount ?? '';
+  form.min_rating.value = metrics.min_rating ?? '';
+  form.min_sales.value = metrics.min_sales || '';
+  form.keywords.value = metrics.keywords || '';
+  form.preferred_stores.value = metrics.preferred_stores || '';
+  form.blocked_keywords.value = metrics.blocked_keywords || '';
+  form.official_only.checked = Boolean(Number(metrics.official_only));
+}
+
+async function loadMetrics() {
+  const response = await fetch('/api/auth/metrics', { credentials: 'include' });
+  if (!response.ok) return;
+  const payload = await response.json();
+  fillMetrics(payload.data);
+}
+
+els.toggleMetrics.addEventListener('click', async () => {
+  const opening = els.metricsPanel.hidden;
+  els.metricsPanel.hidden = !opening;
+  if (opening) {
+    els.searchBar.hidden = true;
+    await loadMetrics();
+  }
+});
+
+els.metricsPanel.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const payload = {
+    min_price: form.min_price.value,
+    max_price: form.max_price.value,
+    min_discount: form.min_discount.value,
+    max_discount: form.max_discount.value,
+    min_rating: form.min_rating.value,
+    min_sales: form.min_sales.value,
+    keywords: form.keywords.value,
+    preferred_stores: form.preferred_stores.value,
+    blocked_keywords: form.blocked_keywords.value,
+    official_only: form.official_only.checked,
+  };
+  const button = form.querySelector('button[type="submit"]');
+  button.disabled = true;
+  try {
+    const response = await fetch('/api/auth/metrics', {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (!response.ok || data.ok === false) throw new Error(data.error || 'Falha ao salvar');
+    fillMetrics(data.data);
+    showCopyToast('Metricas salvas');
+    loadOffers({ reset: true });
+  } catch (error) {
+    showCopyToast(error.message || 'Nao foi possivel salvar');
+  } finally {
+    button.disabled = false;
+  }
 });
 
 els.clearSearch.addEventListener('click', () => {

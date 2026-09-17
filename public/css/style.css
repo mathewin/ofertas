@@ -426,6 +426,64 @@ body {
   outline: none;
 }
 
+.metrics-panel {
+  flex: 0 0 auto;
+  background: #fff;
+  border-bottom: 1px solid var(--wa-border);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 58%;
+  overflow-y: auto;
+}
+.metrics-panel h2 {
+  margin: 0;
+  font-size: 15px;
+  color: #0b3d34;
+}
+.metrics-panel p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--wa-muted);
+}
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.metrics-panel label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  color: #41525d;
+}
+.metrics-panel input[type="number"],
+.metrics-panel input[type="text"],
+.metrics-panel input:not([type="checkbox"]) {
+  border: 1px solid #d7dee2;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  outline: none;
+}
+.metrics-panel input:focus { border-color: var(--wa-green-dark); }
+.metrics-check {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px !important;
+}
+.metrics-panel button[type="submit"] {
+  border: none;
+  background: var(--wa-green);
+  color: #06382f;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+
 .offer-actions {
   display: flex;
   flex-direction: column;

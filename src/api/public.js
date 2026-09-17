@@ -6,12 +6,14 @@ import {
   countOffers,
   countOffersByCategory,
   getOffer,
+  getUserMetrics,
   listCategories,
   listEvents,
   listHistory,
   listOffers,
   listSources,
 } from '../db/index.js';
+import { evaluateUserMetrics } from '../tracker/filter.js';
 
 const router = express.Router();
 const streams = new Set();
@@ -61,16 +63,20 @@ export function serializeOffer(row) {
 router.get('/offers', async (req, res, next) => {
   try {
     const { category, source, search, sort, limit, offset } = req.query;
+    const pageSize = Math.min(Number.parseInt(limit ?? '30', 10) || 30, 100);
+    const pageOffset = Number.parseInt(offset ?? '0', 10) || 0;
+    const metrics = req.user?.role === 'admin' ? null : await getUserMetrics(req.user.id);
     const rows = await listOffers({
       status: 'active',
       category,
       source,
       search,
       order: sort,
-      limit: Math.min(Number.parseInt(limit ?? '30', 10) || 30, 100),
-      offset: Number.parseInt(offset ?? '0', 10) || 0,
+      limit: 400,
+      offset: 0,
     });
-    res.json({ ok: true, data: rows.map(serializeOffer) });
+    const filtered = rows.filter((row) => evaluateUserMetrics(row, metrics).ok);
+    res.json({ ok: true, data: filtered.slice(pageOffset, pageOffset + pageSize).map(serializeOffer) });
   } catch (error) {
     next(error);
   }

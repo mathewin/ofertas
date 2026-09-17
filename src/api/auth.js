@@ -9,18 +9,22 @@ import {
   deleteUserSessions,
   getUserByEmail,
   getUserById,
+  getUserMetrics,
   listUsers,
   logEvent,
   updateUser,
+  upsertUserMetrics,
 } from '../db/index.js';
 import {
   clearSessionCookie,
   isSubscriptionActive,
   readSessionToken,
   requireAdmin,
+  requireAuth,
   resolveUser,
   setSessionCookie,
 } from '../middleware/auth.js';
+import { buildUserMetrics } from '../tracker/filter.js';
 
 const router = express.Router();
 const ALLOWED_ROLES = new Set(['admin', 'subscriber']);
@@ -95,6 +99,25 @@ router.get('/me', async (req, res, next) => {
       return res.status(403).json({ ok: false, error: 'Assinatura inativa ou expirada' });
     }
     res.json({ ok: true, data: { user: publicUser(user) } });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.get('/metrics', requireAuth, async (req, res, next) => {
+  try {
+    res.json({ ok: true, data: await getUserMetrics(req.user.id) });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.put('/metrics', requireAuth, async (req, res, next) => {
+  try {
+    const metrics = buildUserMetrics(req.body || {});
+    const saved = await upsertUserMetrics(req.user.id, metrics);
+    await logEvent('metrics', 'info', `Metricas atualizadas por ${req.user.email}`);
+    res.json({ ok: true, data: saved });
   } catch (error) {
     next(error);
   }
