@@ -57,6 +57,7 @@ export async function seed() {
 
   const sourceRows = [
     { id: 'demo', name: 'Demonstracao', enabled: config.sources.demo.enabled ? 1 : 0 },
+    { id: 'kabum', name: 'KaBuM!', enabled: config.sources.kabum.enabled ? 1 : 0 },
     { id: 'shopee', name: 'Shopee', enabled: config.sources.shopee.enabled ? 1 : 0 },
     { id: 'tiktok', name: 'TikTok Shop', enabled: config.sources.tiktok.enabled ? 1 : 0 },
   ];

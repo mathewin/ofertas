@@ -69,7 +69,10 @@ export const config = {
 
   sources: {
     demo: {
-      enabled: bool(process.env.DEMO_SOURCE_ENABLED, true),
+      enabled: bool(process.env.DEMO_SOURCE_ENABLED, false),
+    },
+    kabum: {
+      enabled: bool(process.env.KABUM_ENABLED, true),
     },
     shopee: {
       enabled: bool(process.env.SHOPEE_ENABLED, false),

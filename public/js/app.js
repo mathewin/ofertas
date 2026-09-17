@@ -81,9 +81,13 @@ function renderOffer(offer) {
       <div class="message-avatar" aria-hidden="true">O</div>
       <div class="bubble">
         <div class="bubble-title">Oferta encontrada!</div>
-        <img class="offer-image" src="${escapeHtml(image)}" alt="${escapeHtml(offer.title)}" loading="lazy"
-             onerror="this.onerror=null;this.src='/api/placeholder/${encodeURIComponent(offer.external_id || offer.id)}'" />
-        <h3 class="offer-title">${escapeHtml(offer.title)}</h3>
+        <a class="offer-media" href="${escapeHtml(offer.product_url || offer.offer_url || '#')}" target="_blank" rel="noopener noreferrer">
+          <img class="offer-image" src="${escapeHtml(image)}" alt="${escapeHtml(offer.title)}" loading="lazy"
+               onerror="this.onerror=null;this.src='/api/placeholder/${encodeURIComponent(offer.external_id || offer.id)}'" />
+        </a>
+        <h3 class="offer-title">
+          <a href="${escapeHtml(offer.product_url || offer.offer_url || '#')}" target="_blank" rel="noopener noreferrer">${escapeHtml(offer.title)}</a>
+        </h3>
         <div class="price-row">
           ${hasOld ? `<span class="price-old">De ${formatBRL(offer.previous_price)}</span>` : ''}
           <span class="price-new">${formatBRL(offer.price)}</span>
@@ -94,7 +98,7 @@ function renderOffer(offer) {
           <span class="offer-category">${escapeHtml(offer.category || 'Outros')}</span>
         </div>
         <div class="offer-actions">
-          <a class="offer-button" href="${escapeHtml(offer.product_url || offer.offer_url || '#')}" target="_blank" rel="noopener noreferrer">ABRIR NA LOJA</a>
+          <a class="offer-button" href="${escapeHtml(offer.product_url || offer.offer_url || '#')}" target="_blank" rel="noopener noreferrer">ABRIR PRODUTO</a>
           <button class="copy-button" type="button" data-copy="${escapeHtml(offerMessage(offer))}">Copiar mensagem</button>
         </div>
         <div class="bubble-footer">${time}${offer.featured ? ' • destaque' : ''}</div>

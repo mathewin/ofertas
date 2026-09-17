@@ -83,7 +83,8 @@ Cada etapa esta em `src/tracker/engine.js`:
 
 | Fonte | Status | Configuracao |
 |-------|--------|--------------|
-| Demonstracao | ativa por padrao | `DEMO_SOURCE_ENABLED` |
+| KaBuM | ativa por padrao | `KABUM_ENABLED` |
+| Demonstracao | desligada | `DEMO_SOURCE_ENABLED` |
 | Shopee (Affiliate Open API) | pronta, desligada | `SHOPEE_ENABLED`, `SHOPEE_APP_ID`, `SHOPEE_APP_SECRET` |
 | TikTok Shop (Open API) | pronta, desligada | `TIKTOK_ENABLED`, `TIKTOK_APP_KEY`, `TIKTOK_APP_SECRET`, `TIKTOK_ACCESS_TOKEN`, `TIKTOK_SHOP_CIPHER` |
 

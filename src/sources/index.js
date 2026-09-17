@@ -1,10 +1,12 @@
 import config from '../config.js';
 import { demoSource } from './demo.js';
+import { kabumSource } from './kabum.js';
 import { shopeeSource } from './shopee.js';
 import { tiktokSource } from './tiktok.js';
 
 const registry = new Map([
   [demoSource.id, demoSource],
+  [kabumSource.id, kabumSource],
   [shopeeSource.id, shopeeSource],
   [tiktokSource.id, tiktokSource],
 ]);
@@ -29,6 +31,7 @@ export function isSourceAvailable(id) {
 export function sourceDefaults() {
   return {
     demo: config.sources.demo.enabled,
+    kabum: config.sources.kabum.enabled,
     shopee: config.sources.shopee.enabled,
     tiktok: config.sources.tiktok.enabled,
   };

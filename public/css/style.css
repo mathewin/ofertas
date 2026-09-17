@@ -261,6 +261,11 @@ body {
   margin-bottom: 6px;
 }
 
+.offer-media {
+  display: block;
+  text-decoration: none;
+}
+
 .offer-image {
   width: 100%;
   height: 158px;
@@ -276,6 +281,11 @@ body {
   line-height: 1.35;
   margin: 8px 0 6px;
   color: #10241f;
+}
+
+.offer-title a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .price-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }

@@ -260,12 +260,12 @@ export const DEFAULT_CATEGORIES = [
 ];
 
 export const DEFAULT_SETTINGS = {
-  minDiscount: '20',
+  minDiscount: '5',
   maxDiscount: '',
   minPrice: '',
   maxPrice: '',
-  minRating: '4',
-  minSales: '50',
+  minRating: '',
+  minSales: '0',
   officialStoresOnly: 'false',
   preferredKeywords: '',
   preferredStores: '',
