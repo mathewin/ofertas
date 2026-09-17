@@ -111,6 +111,13 @@
 *.pem
 *.key
 
+# Banco de dados local (SQLite)
+**/data/
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # Temporary files
 *.tmp
 *.temp
