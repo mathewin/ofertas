@@ -13,7 +13,7 @@ import {
   listOffers,
   listSources,
 } from '../db/index.js';
-import { evaluateUserMetrics } from '../tracker/filter.js';
+import { evaluateUserMetrics, sortByPreferredSources } from '../tracker/filter.js';
 
 const router = express.Router();
 const streams = new Set();
@@ -75,7 +75,10 @@ router.get('/offers', async (req, res, next) => {
       limit: 800,
       offset: 0,
     });
-    const filtered = rows.filter((row) => evaluateUserMetrics(row, metrics).ok);
+    const filtered = sortByPreferredSources(
+      rows.filter((row) => evaluateUserMetrics(row, metrics).ok),
+      metrics,
+    );
     res.json({ ok: true, data: filtered.slice(pageOffset, pageOffset + pageSize).map(serializeOffer) });
   } catch (error) {
     next(error);
@@ -121,15 +124,16 @@ router.get('/categories', async (req, res, next) => {
   }
 });
 
-router.get('/sources', requireAdmin, async (req, res, next) => {
+router.get('/sources', async (req, res, next) => {
   try {
     const sources = await listSources();
+    const available = sources.filter((source) => source.id !== 'demo');
     res.json({
       ok: true,
-      data: sources.map((source) => ({
+      data: available.map((source) => ({
         id: source.id,
         name: source.name,
-        enabled: Number(Boolean(source.enabled)),
+        enabled: 1,
         last_run_at: source.last_run_at,
         last_status: source.last_status,
         items_last_run: Number(source.items_last_run || 0),

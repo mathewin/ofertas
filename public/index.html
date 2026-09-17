@@ -33,21 +33,38 @@
     </div>
 
     <form id="metrics-panel" class="metrics-panel" hidden>
-      <h2>Metricas de garimpagem</h2>
-      <p>Defina o que entra no seu feed: preco, desconto, avaliacao e lojas.</p>
-      <div class="metrics-grid">
-        <label>Preco min (R$)<input name="min_price" type="number" min="0" step="0.01" placeholder="0" /></label>
-        <label>Preco max (R$)<input name="max_price" type="number" min="0" step="0.01" placeholder="sem limite" /></label>
-        <label>Desc. min (%)<input name="min_discount" type="number" min="0" max="99" placeholder="0" /></label>
-        <label>Desc. max (%)<input name="max_discount" type="number" min="0" max="99" placeholder="sem limite" /></label>
-        <label>Nota minima<input name="min_rating" type="number" min="0" max="5" step="0.1" placeholder="ex: 4.5" /></label>
-        <label>Vendas minimas<input name="min_sales" type="number" min="0" placeholder="ex: 100" /></label>
+      <div class="metrics-head">
+        <h2>Filtros do feed</h2>
+        <p>Marque as fontes que quer ver primeiro. As outras continuam no feed, depois.</p>
       </div>
-      <label>Palavras-chave (virgula)<input name="keywords" placeholder="notebook, air fryer, iphone" /></label>
-      <label>Lojas preferidas (virgula)<input name="preferred_stores" placeholder="Shopee Oficial, Mall" /></label>
-      <label>Bloquear palavras (virgula)<input name="blocked_keywords" placeholder="usado, replica, pirata" /></label>
-      <label class="metrics-check"><input name="official_only" type="checkbox" /> So lojas oficiais / bem avaliadas</label>
-      <button type="submit">Salvar metricas</button>
+      <div class="metrics-section">
+        <span class="metrics-label">Fontes</span>
+        <div id="metrics-sources" class="source-picks"></div>
+      </div>
+      <div class="metrics-section">
+        <span class="metrics-label">Preco e desconto</span>
+        <div class="metrics-grid">
+          <label>Minimo (R$)<input name="min_price" type="number" min="0" step="0.01" placeholder="0" /></label>
+          <label>Maximo (R$)<input name="max_price" type="number" min="0" step="0.01" placeholder="livre" /></label>
+          <label>Desc. min (%)<input name="min_discount" type="number" min="0" max="99" placeholder="0" /></label>
+          <label>Desc. max (%)<input name="max_discount" type="number" min="0" max="99" placeholder="livre" /></label>
+        </div>
+      </div>
+      <div class="metrics-section">
+        <span class="metrics-label">Qualidade</span>
+        <div class="metrics-grid">
+          <label>Nota minima<input name="min_rating" type="number" min="0" max="5" step="0.1" placeholder="4.5" /></label>
+          <label>Vendas minimas<input name="min_sales" type="number" min="0" placeholder="100" /></label>
+        </div>
+      </div>
+      <div class="metrics-section">
+        <span class="metrics-label">Palavras e lojas</span>
+        <label>Incluir<input name="keywords" placeholder="notebook, air fryer, iphone" /></label>
+        <label>Lojas preferidas<input name="preferred_stores" placeholder="Shopee Oficial, Mall" /></label>
+        <label>Bloquear<input name="blocked_keywords" placeholder="usado, replica, pirata" /></label>
+        <label class="metrics-check"><input name="official_only" type="checkbox" /> So lojas oficiais</label>
+      </div>
+      <button type="submit">Salvar filtros</button>
     </form>
 
     <nav class="chips" id="chips" aria-label="Categorias"></nav>
@@ -86,6 +103,6 @@
   </div>
 
   <div id="copy-toast" class="copy-toast" hidden>Mensagem copiada</div>
-  <script src="/js/app.js?v=8" type="module"></script>
+  <script src="/js/app.js?v=9" type="module"></script>
 </body>
 </html>

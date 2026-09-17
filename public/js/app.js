@@ -8,6 +8,8 @@ const state = {
   total: 0,
   loading: false,
   user: null,
+  sources: [],
+  preferredSources: [],
 };
 
 const els = {
@@ -29,6 +31,7 @@ const els = {
   copyToast: document.getElementById('copy-toast'),
   toggleMetrics: document.getElementById('toggle-metrics'),
   metricsPanel: document.getElementById('metrics-panel'),
+  metricsSources: document.getElementById('metrics-sources'),
 };
 
 function escapeHtml(value) {
@@ -205,6 +208,36 @@ els.toggleSearch.addEventListener('click', () => {
   }
 });
 
+function parseSourceList(value) {
+  return String(value || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function selectedSources() {
+  return [...(els.metricsSources?.querySelectorAll('input[name="preferred_sources"]:checked') || [])]
+    .map((input) => input.value);
+}
+
+function renderSourcePicks(preferred = state.preferredSources) {
+  const selected = new Set(parseSourceList(Array.isArray(preferred) ? preferred.join(',') : preferred));
+  const sources = state.sources.length
+    ? state.sources
+    : [
+        { id: 'shopee', name: 'Shopee' },
+        { id: 'tiktok', name: 'TikTok Shop' },
+        { id: 'kabum', name: 'KaBuM!' },
+      ];
+  els.metricsSources.innerHTML = sources.map((source) => {
+    const active = selected.has(String(source.id).toLowerCase());
+    return `<label class="source-pick${active ? ' active' : ''}">
+      <input type="checkbox" name="preferred_sources" value="${escapeHtml(source.id)}" ${active ? 'checked' : ''} />
+      ${escapeHtml(source.name)}
+    </label>`;
+  }).join('');
+}
+
 function fillMetrics(metrics) {
   const form = els.metricsPanel;
   if (!form || !metrics) return;
@@ -218,6 +251,20 @@ function fillMetrics(metrics) {
   form.preferred_stores.value = metrics.preferred_stores || '';
   form.blocked_keywords.value = metrics.blocked_keywords || '';
   form.official_only.checked = Boolean(Number(metrics.official_only));
+  state.preferredSources = parseSourceList(metrics.preferred_sources);
+  renderSourcePicks(state.preferredSources);
+}
+
+async function loadSources() {
+  try {
+    const response = await fetch('/api/sources', { credentials: 'include' });
+    if (!response.ok) return;
+    const payload = await response.json();
+    state.sources = payload.data || [];
+    renderSourcePicks(state.preferredSources);
+  } catch {
+    renderSourcePicks(state.preferredSources);
+  }
 }
 
 async function loadMetrics() {
@@ -232,8 +279,15 @@ els.toggleMetrics.addEventListener('click', async () => {
   els.metricsPanel.hidden = !opening;
   if (opening) {
     els.searchBar.hidden = true;
+    await loadSources();
     await loadMetrics();
   }
+});
+
+els.metricsSources.addEventListener('change', (event) => {
+  const pick = event.target.closest('.source-pick');
+  if (!pick) return;
+  pick.classList.toggle('active', event.target.checked);
 });
 
 els.metricsPanel.addEventListener('submit', async (event) => {
@@ -250,6 +304,7 @@ els.metricsPanel.addEventListener('submit', async (event) => {
     preferred_stores: form.preferred_stores.value,
     blocked_keywords: form.blocked_keywords.value,
     official_only: form.official_only.checked,
+    preferred_sources: selectedSources(),
   };
   const button = form.querySelector('button[type="submit"]');
   button.disabled = true;
@@ -376,6 +431,8 @@ async function boot() {
     return;
   }
 
+  loadSources();
+  loadMetrics();
   loadCategories();
   loadOffers({ reset: true });
   connectStream();

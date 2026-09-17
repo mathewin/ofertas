@@ -118,6 +118,7 @@ CREATE TABLE IF NOT EXISTS user_metrics (
   keywords TEXT DEFAULT '',
   blocked_keywords TEXT DEFAULT '',
   preferred_stores TEXT DEFAULT '',
+  preferred_sources TEXT DEFAULT '',
   updated_at TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -243,6 +244,7 @@ CREATE TABLE IF NOT EXISTS user_metrics (
   keywords TEXT DEFAULT '',
   blocked_keywords TEXT DEFAULT '',
   preferred_stores TEXT DEFAULT '',
+  preferred_sources TEXT DEFAULT '',
   updated_at TEXT,
   FOREIGN KEY (user_id) REFERENCES users(id)
 );

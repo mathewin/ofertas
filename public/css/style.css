@@ -440,21 +440,34 @@ body {
   flex: 0 0 auto;
   background: #fff;
   border-bottom: 1px solid var(--wa-border);
-  padding: 12px;
+  padding: 12px 12px 14px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 58%;
+  gap: 12px;
+  max-height: 62%;
   overflow-y: auto;
 }
-.metrics-panel h2 {
+.metrics-head h2 {
   margin: 0;
   font-size: 15px;
   color: #0b3d34;
 }
-.metrics-panel p {
-  margin: 0;
+.metrics-head p {
+  margin: 4px 0 0;
   font-size: 12px;
+  color: var(--wa-muted);
+  line-height: 1.4;
+}
+.metrics-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.metrics-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
   color: var(--wa-muted);
 }
 .metrics-grid {
@@ -465,7 +478,7 @@ body {
 .metrics-panel label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
   font-size: 12px;
   color: #41525d;
 }
@@ -473,25 +486,68 @@ body {
 .metrics-panel input[type="text"],
 .metrics-panel input:not([type="checkbox"]) {
   border: 1px solid #d7dee2;
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-size: 13px;
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 14px;
+  background: #f0f2f5;
+  color: var(--wa-text);
   outline: none;
+  width: 100%;
 }
-.metrics-panel input:focus { border-color: var(--wa-green-dark); }
+.metrics-panel input:focus {
+  border-color: var(--wa-green-dark);
+  background: #fff;
+}
+.source-picks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.source-pick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #d7dee2;
+  background: #fff;
+  color: #41525d;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+.source-pick input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--wa-green-dark);
+}
+.source-pick.active {
+  background: var(--wa-green-dark);
+  border-color: var(--wa-green-dark);
+  color: #fff;
+  font-weight: 600;
+}
 .metrics-check {
   flex-direction: row !important;
   align-items: center;
   gap: 8px !important;
+  font-size: 13px !important;
+}
+.metrics-check input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--wa-green-dark);
 }
 .metrics-panel button[type="submit"] {
   border: none;
   background: var(--wa-green);
   color: #06382f;
   font-weight: 700;
-  padding: 10px;
-  border-radius: 9px;
+  padding: 12px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 14px;
 }
 
 .offer-actions {

@@ -35,6 +35,11 @@ export async function initDb() {
 export async function migrate() {
   const schema = driver.dialect === 'postgres' ? POSTGRES_SCHEMA : SQLITE_SCHEMA;
   await driver.exec(schema);
+  try {
+    await driver.exec("ALTER TABLE user_metrics ADD COLUMN preferred_sources TEXT DEFAULT ''");
+  } catch {
+    // coluna ja existe
+  }
 }
 
 export async function seed() {
@@ -537,6 +542,7 @@ export function defaultUserMetrics() {
     keywords: '',
     blocked_keywords: '',
     preferred_stores: '',
+    preferred_sources: '',
   };
 }
 
@@ -551,8 +557,8 @@ export async function upsertUserMetrics(userId, metrics) {
   await driver.execute(
     `INSERT INTO user_metrics (
       user_id, min_price, max_price, min_discount, max_discount, min_rating, min_sales,
-      official_only, keywords, blocked_keywords, preferred_stores, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      official_only, keywords, blocked_keywords, preferred_stores, preferred_sources, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(user_id) DO UPDATE SET
       min_price = excluded.min_price,
       max_price = excluded.max_price,
@@ -564,6 +570,7 @@ export async function upsertUserMetrics(userId, metrics) {
       keywords = excluded.keywords,
       blocked_keywords = excluded.blocked_keywords,
       preferred_stores = excluded.preferred_stores,
+      preferred_sources = excluded.preferred_sources,
       updated_at = excluded.updated_at`,
     [
       userId,
@@ -577,6 +584,7 @@ export async function upsertUserMetrics(userId, metrics) {
       metrics.keywords || '',
       metrics.blocked_keywords || '',
       metrics.preferred_stores || '',
+      metrics.preferred_sources || '',
       now,
     ],
   );

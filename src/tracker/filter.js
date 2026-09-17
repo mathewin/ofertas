@@ -72,7 +72,29 @@ export function buildUserMetrics(raw = {}) {
     keywords: String(raw.keywords || '').trim(),
     blocked_keywords: String(raw.blocked_keywords ?? raw.blockedKeywords ?? '').trim(),
     preferred_stores: String(raw.preferred_stores ?? raw.preferredStores ?? '').trim(),
+    preferred_sources: String(
+      Array.isArray(raw.preferred_sources ?? raw.preferredSources)
+        ? (raw.preferred_sources ?? raw.preferredSources).join(',')
+        : (raw.preferred_sources ?? raw.preferredSources ?? ''),
+    ).trim(),
   };
+}
+
+export function preferredSourceIds(metrics) {
+  return String(metrics?.preferred_sources || '')
+    .split(',')
+    .map((item) => item.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function sortByPreferredSources(offers, metrics) {
+  const preferred = new Set(preferredSourceIds(metrics));
+  if (!preferred.size) return offers;
+  return [...offers].sort((left, right) => {
+    const leftPreferred = preferred.has(String(left.source || '').toLowerCase()) ? 0 : 1;
+    const rightPreferred = preferred.has(String(right.source || '').toLowerCase()) ? 0 : 1;
+    return leftPreferred - rightPreferred;
+  });
 }
 
 export function evaluateOffer(offer, filter) {
