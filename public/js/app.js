@@ -68,26 +68,11 @@ function offerMessage(offer) {
   return lines.filter((line, index) => line !== '' || index > 5).join('\n');
 }
 
-function isRealStoreUrl(url) {
-  if (!url) return false;
-  try {
-    const parsed = new URL(url);
-    if (!['http:', 'https:'].includes(parsed.protocol)) return false;
-    return !['example.com', 'www.example.com', 'localhost'].includes(parsed.hostname);
-  } catch {
-    return false;
-  }
-}
-
 function renderOffer(offer) {
   const time = formatTime(offer.captured_at || offer.updated_at);
   const discount = Number(offer.discount_percent || 0);
   const hasOld = offer.previous_price && Number(offer.previous_price) > Number(offer.price);
-  const url = offer.offer_url || offer.product_url || '';
   const image = offer.image_url || `/api/placeholder/${encodeURIComponent(offer.external_id || offer.id)}`;
-  const storeLink = isRealStoreUrl(url)
-    ? `<a class="offer-button" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored nofollow">VER OFERTA</a>`
-    : '';
 
   return `
     <article class="message" data-id="${escapeHtml(offer.id)}" data-category="${escapeHtml(offer.category || 'Outros')}" data-search="${escapeHtml(`${offer.title} ${offer.store || ''}`.toLowerCase())}">
@@ -108,7 +93,6 @@ function renderOffer(offer) {
         </div>
         <div class="offer-actions">
           <button class="copy-button" type="button" data-copy="${escapeHtml(offerMessage(offer))}">Copiar mensagem</button>
-          ${storeLink}
         </div>
         <div class="bubble-footer">${time}${offer.featured ? ' • destaque' : ''}</div>
       </div>
