@@ -54,7 +54,6 @@ function formatTime(value) {
 function offerMessage(offer) {
   const discount = Number(offer.discount_percent || 0);
   const hasOld = offer.previous_price && Number(offer.previous_price) > Number(offer.price);
-  const url = offer.offer_url || offer.product_url || '';
   const lines = [
     'Oferta encontrada!',
     offer.title,
@@ -62,9 +61,11 @@ function offerMessage(offer) {
     `Por ${formatBRL(offer.price)}${discount ? ` (${discount}% OFF)` : ''}`,
     offer.store ? `Loja: ${offer.store}` : '',
     offer.category ? `Categoria: ${offer.category}` : '',
-    url,
+    '',
+    'Link:',
+    '[COLE SEU LINK AQUI]',
   ];
-  return lines.filter(Boolean).join('\n');
+  return lines.filter((line, index) => line !== '' || index > 5).join('\n');
 }
 
 function renderOffer(offer) {
