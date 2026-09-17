@@ -4,7 +4,7 @@ const state = {
   search: '',
   sort: 'recent',
   offset: 0,
-  limit: 20,
+  limit: 30,
   total: 0,
   loading: false,
   user: null,

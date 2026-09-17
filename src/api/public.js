@@ -72,7 +72,7 @@ router.get('/offers', async (req, res, next) => {
       source,
       search,
       order: sort,
-      limit: 400,
+      limit: 800,
       offset: 0,
     });
     const filtered = rows.filter((row) => evaluateUserMetrics(row, metrics).ok);

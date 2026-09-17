@@ -277,7 +277,7 @@ export const DEFAULT_SETTINGS = {
   expireMissing: 'true',
   ttlHours: '72',
   publishMode: 'auto',
-  maxPerRun: '60',
+  maxPerRun: '250',
   intervalMinutes: '15',
   aiEnabled: 'false',
 };
