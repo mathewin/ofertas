@@ -7,6 +7,7 @@ const state = {
   limit: 20,
   total: 0,
   loading: false,
+  user: null,
 };
 
 const els = {
@@ -24,6 +25,8 @@ const els = {
   footerText: document.getElementById('footer-text'),
   sortSelect: document.getElementById('sort-select'),
   headerStatus: document.getElementById('header-status'),
+  logout: document.getElementById('logout'),
+  copyToast: document.getElementById('copy-toast'),
 };
 
 function escapeHtml(value) {
@@ -48,6 +51,22 @@ function formatTime(value) {
   return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+function offerMessage(offer) {
+  const discount = Number(offer.discount_percent || 0);
+  const hasOld = offer.previous_price && Number(offer.previous_price) > Number(offer.price);
+  const url = offer.offer_url || offer.product_url || '';
+  const lines = [
+    'Oferta encontrada!',
+    offer.title,
+    hasOld ? `De ${formatBRL(offer.previous_price)}` : '',
+    `Por ${formatBRL(offer.price)}${discount ? ` (${discount}% OFF)` : ''}`,
+    offer.store ? `Loja: ${offer.store}` : '',
+    offer.category ? `Categoria: ${offer.category}` : '',
+    url,
+  ];
+  return lines.filter(Boolean).join('\n');
+}
+
 function renderOffer(offer) {
   const time = formatTime(offer.captured_at || offer.updated_at);
   const discount = Number(offer.discount_percent || 0);
@@ -57,22 +76,25 @@ function renderOffer(offer) {
 
   return `
     <article class="message" data-id="${escapeHtml(offer.id)}" data-category="${escapeHtml(offer.category || 'Outros')}" data-search="${escapeHtml(`${offer.title} ${offer.store || ''}`.toLowerCase())}">
-      <div class="message-avatar" aria-hidden="true">🤖</div>
+      <div class="message-avatar" aria-hidden="true">O</div>
       <div class="bubble">
         <div class="bubble-title">Oferta encontrada!</div>
         <img class="offer-image" src="${escapeHtml(image)}" alt="${escapeHtml(offer.title)}" loading="lazy"
              onerror="this.onerror=null;this.src='/api/placeholder/${encodeURIComponent(offer.external_id || offer.id)}'" />
-        <h3 class="offer-title">📦 ${escapeHtml(offer.title)}</h3>
+        <h3 class="offer-title">${escapeHtml(offer.title)}</h3>
         <div class="price-row">
           ${hasOld ? `<span class="price-old">De ${formatBRL(offer.previous_price)}</span>` : ''}
-          <span class="price-new">🔥 ${formatBRL(offer.price)}</span>
+          <span class="price-new">${formatBRL(offer.price)}</span>
           ${discount ? `<span class="discount-badge">${discount}% OFF</span>` : ''}
         </div>
         <div class="offer-meta">
-          <span class="offer-store">🛒 ${escapeHtml(offer.store || offer.source || 'Loja')}</span>
+          <span class="offer-store">${escapeHtml(offer.store || offer.source || 'Loja')}</span>
           <span class="offer-category">${escapeHtml(offer.category || 'Outros')}</span>
         </div>
-        <a class="offer-button" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored nofollow">VER OFERTA</a>
+        <div class="offer-actions">
+          <button class="copy-button" type="button" data-copy="${escapeHtml(offerMessage(offer))}">Copiar mensagem</button>
+          <a class="offer-button" href="${escapeHtml(url)}" target="_blank" rel="noopener sponsored nofollow">VER OFERTA</a>
+        </div>
         <div class="bubble-footer">${time}${offer.featured ? ' • destaque' : ''}</div>
       </div>
     </article>`;
@@ -107,7 +129,11 @@ async function loadOffers({ reset = false } = {}) {
   });
 
   try {
-    const response = await fetch(`/api/offers?${params.toString()}`);
+    const response = await fetch(`/api/offers?${params.toString()}`, { credentials: 'include' });
+    if (response.status === 401 || response.status === 403) {
+      window.location.replace('/login.html');
+      return;
+    }
     const payload = await response.json();
     const offers = payload.data || [];
     state.total = offers.length;
@@ -128,7 +154,11 @@ async function loadOffers({ reset = false } = {}) {
 
 async function loadCategories() {
   try {
-    const response = await fetch('/api/categories');
+    const response = await fetch('/api/categories', { credentials: 'include' });
+    if (response.status === 401 || response.status === 403) {
+      window.location.replace('/login.html');
+      return;
+    }
     const payload = await response.json();
     const categories = payload.data || [];
     const chips = [
@@ -179,6 +209,32 @@ els.sortSelect.addEventListener('change', (event) => {
   loadOffers({ reset: true });
 });
 
+els.logout.addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  window.location.replace('/login.html');
+});
+
+let toastTimer = null;
+function showCopyToast(message) {
+  els.copyToast.textContent = message;
+  els.copyToast.hidden = false;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    els.copyToast.hidden = true;
+  }, 1800);
+}
+
+els.messages.addEventListener('click', async (event) => {
+  const button = event.target.closest('[data-copy]');
+  if (!button) return;
+  try {
+    await navigator.clipboard.writeText(button.dataset.copy);
+    showCopyToast('Mensagem copiada');
+  } catch {
+    showCopyToast('Nao foi possivel copiar');
+  }
+});
+
 function connectStream() {
   if (!('EventSource' in window)) return;
   const source = new EventSource('/api/stream');
@@ -227,9 +283,29 @@ function connectStream() {
   });
 }
 
-loadCategories();
-loadOffers({ reset: true });
-connectStream();
-setInterval(() => {
-  if (document.visibilityState === 'visible') loadOffers({ reset: true });
-}, 120000);
+async function boot() {
+  try {
+    const response = await fetch('/api/auth/me', { credentials: 'include' });
+    if (!response.ok) {
+      window.location.replace('/login.html');
+      return;
+    }
+    const payload = await response.json();
+    state.user = payload.data?.user;
+    if (els.headerStatus && state.user?.name) {
+      els.headerStatus.textContent = `ola, ${state.user.name}`;
+    }
+  } catch {
+    window.location.replace('/login.html');
+    return;
+  }
+
+  loadCategories();
+  loadOffers({ reset: true });
+  connectStream();
+  setInterval(() => {
+    if (document.visibilityState === 'visible') loadOffers({ reset: true });
+  }, 120000);
+}
+
+boot();

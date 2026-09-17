@@ -49,6 +49,12 @@ export const config = {
   env: process.env.NODE_ENV || 'development',
   port: int(process.env.PORT, 3000),
   adminToken: process.env.ADMIN_TOKEN || 'admin',
+  auth: {
+    sessionDays: int(process.env.SESSION_DAYS, 30),
+    adminEmail: (process.env.ADMIN_EMAIL || 'admin@ofertas.local').toLowerCase(),
+    adminPassword: process.env.ADMIN_PASSWORD || process.env.ADMIN_TOKEN || 'admin',
+    adminName: process.env.ADMIN_NAME || 'Administrador',
+  },
 
   db: {
     driver: (process.env.DB_DRIVER || 'sqlite').toLowerCase(),

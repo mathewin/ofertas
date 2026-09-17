@@ -1,6 +1,7 @@
 import express from 'express';
 import bus from '../lib/bus.js';
 import { getSchedulerState } from '../tracker/scheduler.js';
+import { requireAdmin, requireAuth } from '../middleware/auth.js';
 import {
   countOffers,
   countOffersByCategory,
@@ -14,6 +15,32 @@ import {
 
 const router = express.Router();
 const streams = new Set();
+
+const PALETTE = ['#128C7E', '#075E54', '#25D366', '#34B7F1', '#6C63FF', '#FF8A4C'];
+
+router.get('/placeholder/:seed', (req, res) => {
+  const seed = String(req.params.seed || 'oferta');
+  let hash = 0;
+  for (let index = 0; index < seed.length; index += 1) {
+    hash = (hash * 31 + seed.charCodeAt(index)) % 100000;
+  }
+  const from = PALETTE[hash % PALETTE.length];
+  const to = PALETTE[(hash + 3) % PALETTE.length];
+  const label = seed.replace(/[^a-zA-Z0-9 ]/g, ' ').slice(0, 22).toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to}"/></linearGradient></defs>
+<rect width="600" height="400" fill="url(#g)"/>
+<circle cx="470" cy="90" r="120" fill="rgba(255,255,255,0.12)"/>
+<circle cx="120" cy="330" r="90" fill="rgba(255,255,255,0.10)"/>
+<text x="50%" y="52%" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#ffffff" opacity="0.95">${label}</text>
+</svg>`;
+  res.set('Content-Type', 'image/svg+xml');
+  res.set('Cache-Control', 'public, max-age=86400');
+  res.send(svg);
+});
+
+router.use(requireAuth);
 
 export function serializeOffer(row) {
   if (!row) return null;
@@ -61,7 +88,7 @@ router.get('/offers/:id', async (req, res, next) => {
   }
 });
 
-router.get('/offers/:id/history', async (req, res, next) => {
+router.get('/offers/:id/history', requireAdmin, async (req, res, next) => {
   try {
     const history = await listHistory(req.params.id);
     res.json({ ok: true, data: history });
@@ -88,7 +115,7 @@ router.get('/categories', async (req, res, next) => {
   }
 });
 
-router.get('/sources', async (req, res, next) => {
+router.get('/sources', requireAdmin, async (req, res, next) => {
   try {
     const sources = await listSources();
     res.json({
@@ -107,7 +134,7 @@ router.get('/sources', async (req, res, next) => {
   }
 });
 
-router.get('/stats', async (req, res, next) => {
+router.get('/stats', requireAdmin, async (req, res, next) => {
   try {
     const counts = await countOffers();
     const events = await listEvents(10);
@@ -167,29 +194,5 @@ bus.on('tracker:done', (summary) =>
     expired: summary.expired,
     finished_at: summary.finished_at,
   }));
-
-const PALETTE = ['#128C7E', '#075E54', '#25D366', '#34B7F1', '#6C63FF', '#FF8A4C'];
-
-router.get('/placeholder/:seed', (req, res) => {
-  const seed = String(req.params.seed || 'oferta');
-  let hash = 0;
-  for (let index = 0; index < seed.length; index += 1) {
-    hash = (hash * 31 + seed.charCodeAt(index)) % 100000;
-  }
-  const from = PALETTE[hash % PALETTE.length];
-  const to = PALETTE[(hash + 3) % PALETTE.length];
-  const label = seed.replace(/[^a-zA-Z0-9 ]/g, ' ').slice(0, 22).toUpperCase();
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400">
-<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0%" stop-color="${from}"/><stop offset="100%" stop-color="${to}"/></linearGradient></defs>
-<rect width="600" height="400" fill="url(#g)"/>
-<circle cx="470" cy="90" r="120" fill="rgba(255,255,255,0.12)"/>
-<circle cx="120" cy="330" r="90" fill="rgba(255,255,255,0.10)"/>
-<text x="50%" y="52%" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" fill="#ffffff" opacity="0.95">${label}</text>
-</svg>`;
-  res.set('Content-Type', 'image/svg+xml');
-  res.set('Cache-Control', 'public, max-age=86400');
-  res.send(svg);
-});
 
 export default router;

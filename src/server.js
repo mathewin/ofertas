@@ -4,6 +4,7 @@ import config, { PUBLIC_DIR } from './config.js';
 import { initDb, getDriver, logEvent } from './db/index.js';
 import publicRouter from './api/public.js';
 import adminRouter from './api/admin.js';
+import authRouter from './api/auth.js';
 import { startScheduler, stopScheduler } from './tracker/scheduler.js';
 
 const app = express();
@@ -11,6 +12,7 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: false }));
 
+app.use('/api/auth', authRouter);
 app.use('/api/admin', adminRouter);
 app.use('/api', publicRouter);
 

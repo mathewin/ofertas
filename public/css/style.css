@@ -426,6 +426,94 @@ body {
   outline: none;
 }
 
+.offer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.copy-button {
+  display: block;
+  width: 100%;
+  border: 1px solid #cfd8dd;
+  background: #fff;
+  color: #0b3d34;
+  font-weight: 700;
+  font-size: 13.5px;
+  padding: 10px;
+  border-radius: 9px;
+  cursor: pointer;
+}
+.copy-button:hover { background: #f5f7f8; }
+
+.copy-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  background: #111b21;
+  color: #fff;
+  font-size: 13px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  z-index: 20;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.login-body {
+  background: #0b141a;
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+}
+
+.gate-card {
+  width: min(92vw, 380px);
+  background: #fff;
+  border-radius: 18px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+}
+.gate-logo {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--wa-green);
+  color: #06382f;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 22px;
+  margin: 0 auto 4px;
+}
+.gate-card h1 { margin: 0; text-align: center; font-size: 22px; }
+.gate-card p { margin: 0 0 8px; text-align: center; color: var(--wa-muted); font-size: 13.5px; }
+.gate-card label { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: #41525d; }
+.gate-card input {
+  border: 1px solid #d7dee2;
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 15px;
+  outline: none;
+}
+.gate-card input:focus { border-color: var(--wa-green-dark); }
+.gate-card button {
+  margin-top: 6px;
+  border: none;
+  background: var(--wa-green);
+  color: #06382f;
+  font-weight: 700;
+  font-size: 15px;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.gate-error { color: #c0392b; text-align: center; }
+
 @media (max-width: 420px) {
   .bubble { max-width: 88%; min-width: 0; }
   .offer-image { height: 138px; }

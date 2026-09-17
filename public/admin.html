@@ -12,10 +12,11 @@
     <form id="login-form" class="login-card">
       <div class="login-logo">O</div>
       <h1>Painel de Ofertas</h1>
-      <p>Informe o token administrativo para continuar.</p>
-      <input id="token-input" type="password" placeholder="Token administrativo" autocomplete="current-password" required />
+      <p>Entre com o login de administrador.</p>
+      <input id="email-input" type="email" placeholder="E-mail" autocomplete="username" required />
+      <input id="password-input" type="password" placeholder="Senha" autocomplete="current-password" required />
       <button type="submit">Entrar</button>
-      <small id="login-error" class="login-error" hidden>Token invalido.</small>
+      <small id="login-error" class="login-error" hidden>Login invalido.</small>
     </form>
   </section>
 
@@ -33,6 +34,7 @@
         <button class="nav-item" data-view="offers">Ofertas</button>
         <button class="nav-item" data-view="sources">Fontes</button>
         <button class="nav-item" data-view="categories">Categorias</button>
+        <button class="nav-item" data-view="subscribers">Assinantes</button>
         <button class="nav-item" data-view="settings">Configuracoes</button>
         <button class="nav-item" data-view="events">Eventos</button>
       </nav>
@@ -145,6 +147,47 @@
               <label>Ordem<input name="sort_order" type="number" value="0" /></label>
               <label class="checkbox"><input name="enabled" type="checkbox" checked /> Ativa</label>
               <button type="submit">Salvar categoria</button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="view-subscribers" hidden>
+        <div class="grid-2">
+          <div class="panel">
+            <h2>Assinantes</h2>
+            <div class="toolbar">
+              <input id="users-search" type="search" placeholder="Buscar por nome ou e-mail" />
+              <select id="users-status">
+                <option value="all">Todos</option>
+                <option value="active">Ativos</option>
+                <option value="inactive">Inativos</option>
+              </select>
+            </div>
+            <div id="users-list" class="category-list"></div>
+          </div>
+          <div class="panel">
+            <h2>Novo / editar assinante</h2>
+            <form id="user-form" class="form">
+              <input type="hidden" name="id" />
+              <label>Nome<input name="name" required /></label>
+              <label>E-mail<input name="email" type="email" required /></label>
+              <label>Senha<input name="password" type="password" placeholder="Minimo 6 caracteres" /></label>
+              <label>Papel
+                <select name="role">
+                  <option value="subscriber">Assinante</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </label>
+              <label>Status
+                <select name="status">
+                  <option value="active">Ativo</option>
+                  <option value="inactive">Inativo</option>
+                </select>
+              </label>
+              <label>Expira em<input name="expires_at" type="date" /></label>
+              <label>Observacoes<input name="notes" /></label>
+              <button type="submit">Salvar assinante</button>
             </form>
           </div>
         </div>

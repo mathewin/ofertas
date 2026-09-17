@@ -1,5 +1,6 @@
 import express from 'express';
 import config from '../config.js';
+import { requireAdmin } from '../middleware/auth.js';
 import { runTracker } from '../tracker/engine.js';
 import { getSchedulerState } from '../tracker/scheduler.js';
 import { listSourceAdapters } from '../sources/index.js';
@@ -32,16 +33,21 @@ const ALLOWED_SETTINGS = new Set([
 
 const ALLOWED_STATUS = new Set(['active', 'pending', 'hidden', 'expired', 'archived']);
 
-router.use((req, res, next) => {
-  const token = req.get('x-admin-token') || req.query.token;
-  if (!token || token !== config.adminToken) {
-    return res.status(401).json({ ok: false, error: 'Token administrativo invalido' });
-  }
-  next();
-});
+router.use(requireAdmin);
 
 router.get('/session', (req, res) => {
-  res.json({ ok: true, data: { authenticated: true } });
+  res.json({
+    ok: true,
+    data: {
+      authenticated: true,
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+      },
+    },
+  });
 });
 
 router.get('/dashboard', async (req, res, next) => {

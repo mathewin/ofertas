@@ -32,9 +32,17 @@ npm install
 npm start
 ```
 
-- Site: http://localhost:3000
-- Painel: http://localhost:3000/admin (token em `ADMIN_TOKEN`)
+- Login: http://localhost:3000/login.html
+- Site (assinante): http://localhost:3000
+- Painel (admin): http://localhost:3000/admin
 - Healthcheck: http://localhost:3000/health
+
+Conta administrativa padrao (troque no `.env` antes de publicar):
+
+- E-mail: `ADMIN_EMAIL` (padrao `admin@ofertas.local`)
+- Senha: `ADMIN_PASSWORD` (padrao `admin`)
+
+O assinante so consegue ver ofertas, buscar por categoria e copiar a mensagem. O administrador cria e gerencia as contas no painel, em **Assinantes**.
 
 Na primeira execucao o banco e criado, populado com categorias/configuracoes e o
 rastreador roda automaticamente (fonte `demo` ligada por padrao para o site ja aparecer cheio).

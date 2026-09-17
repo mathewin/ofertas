@@ -1,10 +1,8 @@
-const TOKEN_KEY = 'ofertas.admin.token';
-
 const state = {
-  token: localStorage.getItem(TOKEN_KEY) || '',
   view: 'dashboard',
   offers: { offset: 0, limit: 50, status: 'all', source: 'all', search: '', sort: 'recent' },
   categories: [],
+  users: [],
 };
 
 const $ = (selector) => document.querySelector(selector);
@@ -45,18 +43,19 @@ function toast(message, isError = false) {
 }
 
 async function api(path, options = {}) {
-  const response = await fetch(`/api/admin${path}`, {
+  const url = path.startsWith('/auth') ? `/api${path}` : `/api/admin${path}`;
+  const response = await fetch(url, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      'x-admin-token': state.token,
       ...(options.headers || {}),
     },
   });
   const payload = await response.json().catch(() => ({}));
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     showLogin();
-    throw new Error('Sessao expirada');
+    throw new Error(payload.error || 'Sessao expirada');
   }
   if (!response.ok || payload.ok === false) {
     throw new Error(payload.error || `Erro ${response.status}`);
@@ -68,8 +67,6 @@ async function api(path, options = {}) {
 function showLogin() {
   $('#login-screen').hidden = false;
   $('#app').hidden = true;
-  localStorage.removeItem(TOKEN_KEY);
-  state.token = '';
 }
 
 function showApp() {
@@ -79,20 +76,33 @@ function showApp() {
 
 $('#login-form').addEventListener('submit', async (event) => {
   event.preventDefault();
-  const token = $('#token-input').value.trim();
-  state.token = token;
   try {
-    await api('/session');
-    localStorage.setItem(TOKEN_KEY, token);
+    const data = await api('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: $('#email-input').value.trim(),
+        password: $('#password-input').value,
+      }),
+    });
+    if (data.user?.role !== 'admin') {
+      $('#login-error').textContent = 'Esta conta nao e administrativa.';
+      $('#login-error').hidden = false;
+      await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+      return;
+    }
     $('#login-error').hidden = true;
     showApp();
-    boot();
+    setView('dashboard');
   } catch (error) {
+    $('#login-error').textContent = error.message || 'Login invalido.';
     $('#login-error').hidden = false;
   }
 });
 
-$('#logout').addEventListener('click', showLogin);
+$('#logout').addEventListener('click', async () => {
+  await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+  showLogin();
+});
 
 // ------------------------------------------------------------------ views
 const VIEW_TITLES = {
@@ -100,6 +110,7 @@ const VIEW_TITLES = {
   offers: 'Ofertas',
   sources: 'Fontes',
   categories: 'Categorias',
+  subscribers: 'Assinantes',
   settings: 'Configuracoes',
   events: 'Eventos',
 };
@@ -125,6 +136,7 @@ async function loadView() {
     else if (state.view === 'offers') await loadOffers();
     else if (state.view === 'sources') await loadSources();
     else if (state.view === 'categories') await loadCategories();
+    else if (state.view === 'subscribers') await loadUsers();
     else if (state.view === 'settings') await loadSettings();
     else if (state.view === 'events') await loadEvents();
   } catch (error) {
@@ -415,6 +427,108 @@ async function loadCategories() {
   });
 }
 
+async function loadUsers() {
+  const search = $('#users-search')?.value.trim() || '';
+  const status = $('#users-status')?.value || 'all';
+  const params = new URLSearchParams({ search, status, limit: '100' });
+  state.users = await api(`/auth/users?${params.toString()}`);
+  $('#users-list').innerHTML = state.users.map((user) => `
+    <div class="category-row">
+      <div>
+        <strong>${escapeHtml(user.name)}</strong>
+        <small>${escapeHtml(user.email)} • ${user.role === 'admin' ? 'admin' : 'assinante'} • ${user.status}${user.expires_at ? ` • expira ${formatDate(user.expires_at)}` : ''}</small>
+      </div>
+      <div class="actions">
+        <button data-user-edit="${user.id}">Editar</button>
+        <button data-user-toggle="${user.id}" data-value="${user.status === 'active' ? 'inactive' : 'active'}">${user.status === 'active' ? 'Desativar' : 'Ativar'}</button>
+        <button data-user-delete="${user.id}" class="danger">Excluir</button>
+      </div>
+    </div>`).join('') || '<p class="muted">Nenhum assinante cadastrado.</p>';
+
+  $$('[data-user-edit]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const user = state.users.find((item) => item.id === button.dataset.userEdit);
+      if (!user) return;
+      const form = $('#user-form');
+      form.id.value = user.id;
+      form.name.value = user.name;
+      form.email.value = user.email;
+      form.password.value = '';
+      form.role.value = user.role;
+      form.status.value = user.status;
+      form.expires_at.value = user.expires_at ? String(user.expires_at).slice(0, 10) : '';
+      form.notes.value = user.notes || '';
+      form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  });
+
+  $$('[data-user-toggle]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      try {
+        await api(`/auth/users/${button.dataset.userToggle}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: button.dataset.value }),
+        });
+        toast('Assinante atualizado');
+        await loadUsers();
+      } catch (error) {
+        toast(error.message, true);
+      }
+    });
+  });
+
+  $$('[data-user-delete]').forEach((button) => {
+    button.addEventListener('click', async () => {
+      if (!confirm('Excluir este usuario?')) return;
+      try {
+        await api(`/auth/users/${button.dataset.userDelete}`, { method: 'DELETE' });
+        toast('Usuario excluido');
+        await loadUsers();
+      } catch (error) {
+        toast(error.message, true);
+      }
+    });
+  });
+}
+
+$('#users-search')?.addEventListener('input', () => {
+  clearTimeout(window.__usersSearchTimer);
+  window.__usersSearchTimer = setTimeout(() => {
+    loadUsers().catch((error) => toast(error.message, true));
+  }, 350);
+});
+$('#users-status')?.addEventListener('change', () => {
+  loadUsers().catch((error) => toast(error.message, true));
+});
+
+$('#user-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const payload = {
+    name: form.name.value.trim(),
+    email: form.email.value.trim(),
+    role: form.role.value,
+    status: form.status.value,
+    expires_at: form.expires_at.value ? new Date(`${form.expires_at.value}T23:59:59`).toISOString() : null,
+    notes: form.notes.value.trim(),
+  };
+  if (form.password.value) payload.password = form.password.value;
+  try {
+    if (form.id.value) {
+      await api(`/auth/users/${form.id.value}`, { method: 'PATCH', body: JSON.stringify(payload) });
+    } else {
+      if (!payload.password) throw new Error('Informe a senha do novo assinante');
+      await api('/auth/users', { method: 'POST', body: JSON.stringify(payload) });
+    }
+    form.reset();
+    form.id.value = '';
+    toast('Assinante salvo');
+    await loadUsers();
+  } catch (error) {
+    toast(error.message, true);
+  }
+});
+
 $('#category-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = event.target;
@@ -520,7 +634,11 @@ $('#run-now').addEventListener('click', async () => {
 // ------------------------------------------------------------------ boot
 async function boot() {
   try {
-    await api('/session');
+    const data = await api('/session');
+    if (data.user?.role && data.user.role !== 'admin') {
+      showLogin();
+      return;
+    }
     showApp();
     setView('dashboard');
   } catch {

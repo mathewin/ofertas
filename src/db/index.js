@@ -1,5 +1,6 @@
 import config from '../config.js';
 import { uuid } from '../lib/util.js';
+import { hashPassword } from '../lib/password.js';
 import {
   SQLITE_SCHEMA,
   POSTGRES_SCHEMA,
@@ -71,6 +72,20 @@ export async function seed() {
   await driver.execute(
     'INSERT INTO events (source, level, message, created_at) VALUES (?, ?, ?, ?)',
     ['system', 'info', 'Sistema inicializado', now],
+  );
+
+  await seedAdminUser(now);
+}
+
+async function seedAdminUser(now) {
+  const email = String(config.auth.adminEmail || '').trim().toLowerCase();
+  if (!email) return;
+  const existing = await driver.query('SELECT id FROM users WHERE email = ?', [email]);
+  if (existing[0]) return;
+  await driver.execute(
+    `INSERT INTO users (id, name, email, password_hash, role, status, expires_at, notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, 'admin', 'active', NULL, '', ?, ?)`,
+    [uuid(), config.auth.adminName, email, hashPassword(config.auth.adminPassword), now, now],
   );
 }
 
@@ -390,6 +405,161 @@ export async function listEvents(limit = 50) {
   return driver.query('SELECT * FROM events ORDER BY created_at DESC LIMIT ?', [Number(limit)]);
 }
 
+const USER_SAFE_FIELDS = 'id, name, email, role, status, expires_at, notes, created_at, updated_at, last_login_at';
+
+function normalizeEmail(email) {
+  return String(email || '').trim().toLowerCase();
+}
+
+export async function countUsers(filters = {}) {
+  const clauses = [];
+  const params = [];
+  if (filters.role && filters.role !== 'all') {
+    clauses.push('role = ?');
+    params.push(filters.role);
+  }
+  if (filters.status && filters.status !== 'all') {
+    clauses.push('status = ?');
+    params.push(filters.status);
+  }
+  if (filters.search) {
+    clauses.push('(name LIKE ? OR email LIKE ?)');
+    const term = `%${filters.search}%`;
+    params.push(term, term);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const rows = await driver.query(`SELECT COUNT(*) AS total FROM users ${where}`, params);
+  return Number(rows[0]?.total || 0);
+}
+
+export async function listUsers(filters = {}) {
+  const clauses = [];
+  const params = [];
+  if (filters.role && filters.role !== 'all') {
+    clauses.push('role = ?');
+    params.push(filters.role);
+  }
+  if (filters.status && filters.status !== 'all') {
+    clauses.push('status = ?');
+    params.push(filters.status);
+  }
+  if (filters.search) {
+    clauses.push('(name LIKE ? OR email LIKE ?)');
+    const term = `%${filters.search}%`;
+    params.push(term, term);
+  }
+  const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+  const limit = Math.min(Number(filters.limit) || 50, 200);
+  const offset = Number(filters.offset) || 0;
+  params.push(limit, offset);
+  return driver.query(
+    `SELECT ${USER_SAFE_FIELDS} FROM users ${where} ORDER BY created_at DESC LIMIT ? OFFSET ?`,
+    params,
+  );
+}
+
+export async function getUserById(id) {
+  const rows = await driver.query(`SELECT ${USER_SAFE_FIELDS} FROM users WHERE id = ?`, [id]);
+  return rows[0] || null;
+}
+
+export async function getUserByEmail(email) {
+  const rows = await driver.query('SELECT * FROM users WHERE email = ?', [normalizeEmail(email)]);
+  return rows[0] || null;
+}
+
+export async function createUser(user) {
+  const now = new Date().toISOString();
+  const id = user.id || uuid();
+  const email = normalizeEmail(user.email);
+  await driver.execute(
+    `INSERT INTO users (id, name, email, password_hash, role, status, expires_at, notes, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      id,
+      String(user.name || '').trim(),
+      email,
+      user.password_hash,
+      user.role || 'subscriber',
+      user.status || 'active',
+      user.expires_at || null,
+      user.notes || '',
+      now,
+      now,
+    ],
+  );
+  return getUserById(id);
+}
+
+export async function updateUser(id, patch) {
+  const current = await getUserById(id);
+  if (!current) return null;
+  const next = {
+    name: patch.name !== undefined ? String(patch.name).trim() : current.name,
+    email: patch.email !== undefined ? normalizeEmail(patch.email) : current.email,
+    role: patch.role !== undefined ? patch.role : current.role,
+    status: patch.status !== undefined ? patch.status : current.status,
+    expires_at: patch.expires_at !== undefined ? patch.expires_at : current.expires_at,
+    notes: patch.notes !== undefined ? String(patch.notes) : current.notes,
+    updated_at: new Date().toISOString(),
+  };
+  const params = [next.name, next.email, next.role, next.status, next.expires_at, next.notes, next.updated_at];
+  let extra = '';
+  if (patch.password_hash) {
+    extra = ', password_hash = ?';
+    params.push(patch.password_hash);
+  }
+  params.push(id);
+  await driver.execute(
+    `UPDATE users SET name = ?, email = ?, role = ?, status = ?, expires_at = ?, notes = ?, updated_at = ?${extra} WHERE id = ?`,
+    params,
+  );
+  return getUserById(id);
+}
+
+export async function deleteUser(id) {
+  await driver.execute('DELETE FROM sessions WHERE user_id = ?', [id]);
+  const result = await driver.execute('DELETE FROM users WHERE id = ?', [id]);
+  return Number(result.changes || 0) > 0;
+}
+
+export async function createSession(userId, token, expiresAt) {
+  const now = new Date().toISOString();
+  await driver.execute(
+    'INSERT INTO sessions (token, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)',
+    [token, userId, now, expiresAt],
+  );
+  await driver.execute('UPDATE users SET last_login_at = ? WHERE id = ?', [now, userId]);
+}
+
+export async function getSessionUser(token) {
+  if (!token) return null;
+  const rows = await driver.query(
+    `SELECT u.id, u.name, u.email, u.role, u.status, u.expires_at, u.notes, u.created_at, u.updated_at, u.last_login_at, s.expires_at AS session_expires_at
+     FROM sessions s
+     INNER JOIN users u ON u.id = s.user_id
+     WHERE s.token = ?`,
+    [token],
+  );
+  const row = rows[0];
+  if (!row) return null;
+  if (row.session_expires_at && new Date(row.session_expires_at).getTime() < Date.now()) {
+    await driver.execute('DELETE FROM sessions WHERE token = ?', [token]);
+    return null;
+  }
+  const { session_expires_at: _expires, ...user } = row;
+  return user;
+}
+
+export async function deleteSession(token) {
+  if (!token) return;
+  await driver.execute('DELETE FROM sessions WHERE token = ?', [token]);
+}
+
+export async function deleteUserSessions(userId) {
+  await driver.execute('DELETE FROM sessions WHERE user_id = ?', [userId]);
+}
+
 export const db = {
   initDb,
   getDriver,
@@ -420,6 +590,17 @@ export const db = {
   listHistory,
   logEvent,
   listEvents,
+  listUsers,
+  countUsers,
+  getUserById,
+  getUserByEmail,
+  createUser,
+  updateUser,
+  deleteUser,
+  createSession,
+  getSessionUser,
+  deleteSession,
+  deleteUserSessions,
 };
 
 export default db;
