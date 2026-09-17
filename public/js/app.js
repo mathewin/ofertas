@@ -92,6 +92,7 @@ function renderOffer(offer) {
           <span class="offer-category">${escapeHtml(offer.category || 'Outros')}</span>
         </div>
         <div class="offer-actions">
+          <a class="offer-button" href="${escapeHtml(offer.product_url || offer.offer_url || '#')}" target="_blank" rel="noopener noreferrer">ABRIR NA LOJA</a>
           <button class="copy-button" type="button" data-copy="${escapeHtml(offerMessage(offer))}">Copiar mensagem</button>
         </div>
         <div class="bubble-footer">${time}${offer.featured ? ' • destaque' : ''}</div>

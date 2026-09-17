@@ -58,7 +58,7 @@ export const demoSource = {
         currency: 'BRL',
         store: product.store,
         category: product.category,
-        product_url: `https://example.com/oferta/${encodeURIComponent(externalId)}`,
+        product_url: `https://shopee.com.br/search?keyword=${encodeURIComponent(product.title)}`,
         affiliate_url: '',
         rating: Math.round(randomBetween(4, 5) * 10) / 10,
         sales: Math.floor(randomBetween(50, 5000)),

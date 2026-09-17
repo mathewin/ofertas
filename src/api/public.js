@@ -54,7 +54,7 @@ export function serializeOffer(row) {
     sales: Number(row.sales || 0),
     featured: Number(Boolean(row.featured)),
     sponsored: Number(Boolean(row.sponsored)),
-    offer_url: row.affiliate_url || row.product_url || '',
+    offer_url: row.product_url || row.affiliate_url || '',
   };
 }
 
